@@ -4,34 +4,36 @@ CREATE OR REPLACE PACKAGE ut_plex_lexer AS
     --%suite(plex_lexer)
     
     --%test(initialize works with empty)
-    PROCEDURE initializeWorksWithEmpty(D VARCHAR2 := 'initialize works with empty');
+    PROCEDURE initializeWorksWithEmpty;
     
     --%test(initialize works with non empty)
-    PROCEDURE initializeWorksWithNonEmpty(D VARCHAR2 := 'initialize works with non empty');
+    PROCEDURE initializeWorksWithNonEmpty;
 
     --%test(currentItem and consume works)
-    PROCEDURE currentAndConsumeItemWorks(D VARCHAR2 := 'currentItem and consume works');
+    PROCEDURE currentAndConsumeItemWorks;
 
     --%test(rollback without takeSnapshot throws)
     --%throws(-20000)
-    PROCEDURE rlbckWOSnapshotThrows(D VARCHAR2 := 'rollback without takeSnapshot throws');
+    PROCEDURE rlbckWOSnapshotThrows;
     
     --%test(commit without takeSnapshot throws)
     --%throws(-20000)
-    PROCEDURE commitWOSnapshotThrows(D VARCHAR2 := 'commit without takeSnapshot throws');
+    PROCEDURE commitWOSnapshotThrows;
     
-    --%test(rollback after takeSnapshot works)
-    PROCEDURE commitAfterSnapWorks(D VARCHAR2 := 'commit after takeSnapshot works');
+    --%test(commit after takeSnapshot throws)
+    --%throws(-20000)
+    PROCEDURE commitAfterSnapWorks;
     
-    --%test(rollback after takeSnapshot works)
-    PROCEDURE rollbackAfterSnapWorks(D VARCHAR2 := 'rollback after takeSnapshot works');
+    --%test(rollback after takeSnapshot throws)
+    --%throws(-20000)
+    PROCEDURE rollbackAfterSnapWorks;
 
 END;
 /
 CREATE OR REPLACE PACKAGE BODY ut_plex_lexer AS
 
     ----------------------------------------------------------------------------
-    PROCEDURE initializeWorksWithEmpty(D VARCHAR2) IS
+    PROCEDURE initializeWorksWithEmpty IS
         l_sourceLines plex.source_lines_type := plex.source_lines_type();
     BEGIN
         -- Test
@@ -39,20 +41,20 @@ CREATE OR REPLACE PACKAGE BODY ut_plex_lexer AS
         --
         -- Expectations
         ut.expect(plex_lexer.currentItem).to_be_null();
-        ut.expect(lex_lexer.getIndex).to_equal(1);
+        ut.expect(plex_lexer.getIndex).to_equal(1);
         --TODO:ut.expect(plex_lexer.eof).to_be_empty();  -- pete_assert.this(plex_lexer.eof);
         ut.expect(plex_lexer.peek(1)).to_be_null();
     END;
 
     ----------------------------------------------------------------------------
-    PROCEDURE initializeWorksWithNonEmpty(D VARCHAR2) IS
+    PROCEDURE initializeWorksWithNonEmpty IS
         l_sourceLines plex.source_lines_type := plex.source_lines_type('foo' || chr(10), 'bar'|| chr(10), 'baz'|| chr(10));
     BEGIN
         -- Test
         plex_lexer.initialize(p_source_lines => l_sourceLines);
         --
         -- Expectations
-        ut.expect(lex_lexer.currentItem).to_equal('f');
+        ut.expect(plex_lexer.currentItem).to_equal('f');
         ut.expect(plex_lexer.eof).to_be_false(); -- pete_assert.this(NOT plex_lexer.eof);
         ut.expect(plex_lexer.peek(1)).to_equal('o');
         ut.expect(plex_lexer.peek(2)).to_equal('o');
@@ -69,25 +71,25 @@ CREATE OR REPLACE PACKAGE BODY ut_plex_lexer AS
     END;
 
     ----------------------------------------------------------------------------
-    PROCEDURE currentAndConsumeItemWorks(D VARCHAR2) IS
+    PROCEDURE currentAndConsumeItemWorks IS
         l_sourceLines plex.source_lines_type := plex.source_lines_type('foo'|| chr(10), 'bar'|| chr(10), 'baz'|| chr(10));
     BEGIN
         -- Prepare Test
         plex_lexer.initialize(p_source_lines => l_sourceLines);
         --
         -- Expectations
-        ut.expect(plex_lexer.currentItem).to_equal('f');
-        ut.expect(plex_lexer.getIndex).to_equal(1);
+        ut.expect(plex_lexer.currentItem, 'CurrentItem is ''f''').to_equal('f');
+        ut.expect(plex_lexer.getIndex, 'Index is 1').to_equal(1);
         -- Test
         plex_lexer.consume;
         --
         -- Expectations
-        ut.expect(plex_lexer.getIndex).to_equal('2');
-        ut.expect(plex_lexer.currentItem).to_equal('0');
+        ut.expect(plex_lexer.currentItem, 'CurrentItem is ''o''').to_equal('o');
+        ut.expect(plex_lexer.getIndex, 'Index is 2').to_equal(2);
     END;
 
     ----------------------------------------------------------------------------
-    PROCEDURE rlbckWOSnapshotThrows(D VARCHAR2) IS
+    PROCEDURE rlbckWOSnapshotThrows IS
         l_sourceLines plex.source_lines_type := plex.source_lines_type('foo'|| chr(10), 'bar'|| chr(10), 'baz'|| chr(10));
     BEGIN
         -- prepare
@@ -99,7 +101,7 @@ CREATE OR REPLACE PACKAGE BODY ut_plex_lexer AS
     END;
 
     ----------------------------------------------------------------------------
-    PROCEDURE commitWOSnapshotThrows(D VARCHAR2) IS
+    PROCEDURE commitWOSnapshotThrows IS
         l_sourceLines plex.source_lines_type := plex.source_lines_type('foo'|| chr(10), 'bar'|| chr(10), 'baz'|| chr(10));
     BEGIN
         -- prepare
@@ -111,7 +113,7 @@ CREATE OR REPLACE PACKAGE BODY ut_plex_lexer AS
     END;
 
     ----------------------------------------------------------------------------
-    PROCEDURE commitAfterSnapWorks(D VARCHAR2) IS
+    PROCEDURE commitAfterSnapWorks IS
         l_sourceLines plex.source_lines_type := plex.source_lines_type('foo'|| chr(10), 'bar'|| chr(10), 'baz'|| chr(10));
     BEGIN
         -- prepare
@@ -127,7 +129,7 @@ CREATE OR REPLACE PACKAGE BODY ut_plex_lexer AS
     END;
 
     ----------------------------------------------------------------------------
-    PROCEDURE rollbackAfterSnapWorks(D VARCHAR2) IS
+    PROCEDURE rollbackAfterSnapWorks IS
         l_sourceLines plex.source_lines_type := plex.source_lines_type('foo'|| chr(10), 'bar'|| chr(10), 'baz'|| chr(10));
         l_indexBefore PLS_INTEGER;
     BEGIN

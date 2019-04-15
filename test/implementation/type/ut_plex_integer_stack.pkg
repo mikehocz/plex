@@ -4,21 +4,21 @@ CREATE OR REPLACE PACKAGE ut_plex_integer_stack AS
     --%suite(Plex_Integer_Stack)
 
     --%test(push pushes, pop pops - stack works)
-    PROCEDURE pushPushesPopPops(D VARCHAR2 := 'push pushes, pop pops - stack works');
+    PROCEDURE pushPushesPopPops;
     
     --%test(pop has procedure overload)
-    PROCEDURE popAsProcedure(D VARCHAR2 := 'pop has procedure overload');
+    PROCEDURE popAsProcedure;
     
     --%test(pop from empty throws)
     --%throws(-20000)
-    PROCEDURE popFromEmptyThrows(D VARCHAR2 := 'pop from empty throws');
+    PROCEDURE popFromEmptyThrows;
 
 END;
 /
 CREATE OR REPLACE PACKAGE BODY ut_plex_integer_stack AS
 
     ----------------------------------------------------------------------------
-    PROCEDURE pushPushesPopPops(D VARCHAR2) IS
+    PROCEDURE pushPushesPopPops IS
         l_stack plex_integer_stack := plex_integer_stack();
     BEGIN
         -- prepare
@@ -44,7 +44,7 @@ CREATE OR REPLACE PACKAGE BODY ut_plex_integer_stack AS
     END;
 
     ----------------------------------------------------------------------------
-    PROCEDURE popAsProcedure(D VARCHAR2) IS
+    PROCEDURE popAsProcedure IS
         l_stack plex_integer_stack := plex_integer_stack();
     BEGIN
         -- Test
@@ -52,11 +52,11 @@ CREATE OR REPLACE PACKAGE BODY ut_plex_integer_stack AS
         l_stack.pop;
         --
         -- Expectations
-        t.expect(l_stack.isEmtpy).to_equal(1);
+        ut.expect(l_stack.isEmtpy).to_equal(1);
     END;
 
     ----------------------------------------------------------------------------
-    PROCEDURE popFromEmptyThrows(D VARCHAR2) IS
+    PROCEDURE popFromEmptyThrows IS
         l_stack  plex_integer_stack := plex_integer_stack();
         l_thrown BOOLEAN := FALSE;
     BEGIN
