@@ -1,16 +1,22 @@
 CREATE OR REPLACE PACKAGE ut_plex_matchKeyword AS
+    --%suitepath(plex)
+    --%suite(plex_matchKeyword);
 
-    Description CONSTANT pete_types.typ_description := 'plex_matchKeyword';
-
+    --%test(if keyword matched even as substring if allowedAsSubstring (default))
     PROCEDURE keywordPrefixNotIngored(D VARCHAR2 := 'if keyword matched even as substring if allowedAsSubstring (default)');
+    
+    --%test(if keyword not matched if not allowedAsSubstring)   
     PROCEDURE keywordPrefixIngored(D VARCHAR2 := 'if keyword not matched if not allowedAsSubstring');
+    
+    --%test(if keyword not matched if not allowedAsSubstring - _#$ are not special characters delimiting keywords)
     PROCEDURE keywordPrefixIngored2(D VARCHAR2 := 'if keyword not matched if not allowedAsSubstring - _#$ are not special characters delimiting keywords');
+    
+    --%test(keyword is matched if delimited by space, special or eof)
     PROCEDURE keywordMatchIfDelimited(D VARCHAR2 := 'keyword is matched if delimited by space, special or eof');
 
 END;
 /
 CREATE OR REPLACE PACKAGE BODY ut_plex_matchKeyword AS
-
     ----------------------------------------------------------------------------
     PROCEDURE keywordPrefixNotIngored(D VARCHAR2) IS
         l_Text         VARCHAR2(30) := '.Test';
@@ -19,17 +25,20 @@ CREATE OR REPLACE PACKAGE BODY ut_plex_matchKeyword AS
         l_matchWord    plex_matchWord := plex_matchWord();
         l_matchedToken plex_token;
     BEGIN
-        pete.set_method_description(D);
+        -- prepare
         plex_lexer.initialize(l_sourceLines);
         --
         l_matchedToken := l_match.isMatch;
-        -- . is matched even as a prefix
-        pete_assert.eq(plex.tk_Dot, l_matchedToken.tokenType);
+        --
+        -- Expectations
+        ut.expect(plex.tk_Dot,'. is matched even as a prefix').to_equal(l_matchedToken.tokenType);
         -- word Test is matched
         l_matchedToken := l_matchWord.isMatch;
-        pete_assert.eq(plex.tk_Word, l_matchedToken.tokenType);
-        pete_assert.eq('Test', l_matchedToken.text);
-        pete_assert.this(plex_lexer.eof);
+        --
+        -- Expectations
+        ut.expect(plex.tk_Word).to_equal(l_matchedToken.tokenType);
+        ut.expect(l_matchedToken.text).to_equal('Test');
+        ut.expect(plex_lexer.eof).be_true();
     END;
 
     ----------------------------------------------------------------------------
@@ -40,17 +49,20 @@ CREATE OR REPLACE PACKAGE BODY ut_plex_matchKeyword AS
         l_matchWord    plex_matchWord := plex_matchWord();
         l_matchedToken plex_token;
     BEGIN
-        pete.set_method_description(D);
+        -- prepare
         plex_lexer.initialize(l_sourceLines);
-        --
+        -- Test
         l_matchedToken := l_match.isMatch;
-        -- function keyword is not matched as prefix
-        pete_assert.this(l_matchedToken IS NULL);
-        -- word functionTest is matched
+        --
+        -- Expectations
+        ut.expect(l_matchedToken,'function keyword is not matched as prefix').to_be_null();
+        -- Test 
         l_matchedToken := l_matchWord.isMatch;
-        pete_assert.eq(plex.tk_Word, l_matchedToken.tokenType);
-        pete_assert.eq(l_Text, l_matchedToken.text);
-        pete_assert.this(plex_lexer.eof);
+        --
+        -- Expectations
+        ut.expect(plex.tk_Word,'word functionTest is matched').to_equal(l_matchedToken.tokenType);
+        ut.expect(l_Text).to_equal(l_matchedToken.text);
+        ut.expect(plex_lexer.eof).be_true();
     END;
 
     ----------------------------------------------------------------------------
@@ -61,17 +73,20 @@ CREATE OR REPLACE PACKAGE BODY ut_plex_matchKeyword AS
         l_matchWord    plex_matchWord := plex_matchWord();
         l_matchedToken plex_token;
     BEGIN
-        pete.set_method_description(D);
+        -- prepare
         plex_lexer.initialize(l_sourceLines);
-        --
+        -- Test
         l_matchedToken := l_match.isMatch;
-        -- function keyword is not matched as prefix
-        pete_assert.this(l_matchedToken IS NULL);
+        --
+        -- Expectations
+        ut.expect(l_matchedToken,'function keyword is not matched as prefix').to_be_null();
+        -- Test
         -- word functionTest is matched
-        l_matchedToken := l_matchWord.isMatch;
-        pete_assert.eq(plex.tk_Word, l_matchedToken.tokenType);
-        pete_assert.eq(l_Text, l_matchedToken.text);
-        pete_assert.this(plex_lexer.eof);
+        --
+        -- Expectations
+        ut.expect(plex.tk_Word,'word functionTest is matched').to_equal(l_matchedToken.tokenType);
+        ut.expect(l_Text).to_equal(l_matchedToken.text);
+        ut.expect(plex_lexer.eof).be_true();
     END;
 
     ----------------------------------------------------------------------------
@@ -83,29 +98,39 @@ CREATE OR REPLACE PACKAGE BODY ut_plex_matchKeyword AS
         l_matchWhiteSpace plex_matchWhiteSpace := plex_matchWhiteSpace();
         l_matchedToken    plex_token;
     BEGIN
-        pete.set_method_description(D);
+        -- prepare
         plex_lexer.initialize(l_sourceLines);
-        --
+        -- Test
         l_matchedToken := l_match.isMatch;
-        pete_assert.eq(plex.tk_FUNCTION, l_matchedToken.tokenType);
-        pete_assert.eq('function', l_matchedToken.text);
         --
-        l_matchedToken := l_matchDot.isMatch;
-        pete_assert.eq(plex.tk_Dot, l_matchedToken.tokenType);
-        pete_assert.eq('.', l_matchedToken.text);
-        --
+        -- Expectations
+        ut.expect(plex.tk_FUNCTION).to_equal(l_matchedToken.tokenType);
+        ut.expect(l_matchedToken.text).to_equal('function');
+        -- Test
         l_matchedToken := l_match.isMatch;
-        pete_assert.eq(plex.tk_FUNCTION, l_matchedToken.tokenType);
-        pete_assert.eq('funcTion', l_matchedToken.text);
         --
+        -- Expectations
+        ut.expect(plex.tk_Dot).to_equal(l_matchedToken.tokenType);
+        ut.expect(l_matchedToken.text).to_equal('.');
+        -- Test
+        l_matchedToken := l_match.isMatch;
+        --
+        -- Expectations
+        ut.expect(plex.tk_FUNCTION).to_equal(l_matchedToken.tokenType);
+        ut.expect(l_matchedToken.text).to_equal('funcTion');
+        -- Test
         l_matchedToken := l_matchWhiteSpace.isMatch;
-        pete_assert.eq(plex.tk_WhiteSpace, l_matchedToken.tokenType);
         --
+        -- Expectations
+        ut.expect(plex.tk_WhiteSpace).to_equal(l_matchedToken.tokenType);
+        -- Test
         l_matchedToken := l_match.isMatch;
-        pete_assert.eq(plex.tk_FUNCTION, l_matchedToken.tokenType);
-        pete_assert.eq('FUNCtion', l_matchedToken.text);
         --
-        pete_assert.this(plex_lexer.eof);
+        -- Expectations
+        ut.expect(plex.tk_FUNCTION).to_equal(l_matchedToken.tokenType);
+        ut.expect(l_matchedToken.text).to_equal('FUNCtion');
+        --
+        ut.expect(plex_lexer.eof).be_true();
     END;
 
 END;
